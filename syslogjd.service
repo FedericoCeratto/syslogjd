@@ -1,0 +1,44 @@
+# syslogjd systemd target
+
+[Unit]
+Description=syslogjd
+Documentation=man:syslogjd
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/syslogjd
+TimeoutStopSec=10
+KillMode=mixed
+KillSignal=SIGTERM
+
+#User=nobody
+Restart=always
+RestartSec=2s
+LimitNOFILE=65536
+
+WorkingDirectory=/
+#WatchdogSec=30s
+
+# Hardening
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+SystemCallFilter=~@clock @cpu-emulation @debug @module @raw-io @obsolete @keyring @swap @reboot @setuid @privileged @memlock
+
+ProtectSystem=strict
+PrivateDevices=yes
+#PrivateUsers=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectKernelModules=true
+ProtectKernelTunables=yes
+
+StandardOutput=syslog+console
+StandardError=syslog+console
+
+ReadWriteDirectories=-/proc/self
+ReadWriteDirectories=-/var/run
+
+[Install]
+WantedBy=multi-user.target

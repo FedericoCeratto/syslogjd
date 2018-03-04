@@ -1,0 +1,88 @@
+## syslogjd
+
+Lightweight syslog to journald collector
+
+image:https://img.shields.io/badge/status-alpha-orange.svg[badge]
+image:https://img.shields.io/badge/version-0.1.0-orange.svg[badge]
+image:https://img.shields.io/badge/License-GPL%20v3-blue.svg[badge]
+
+Receive syslog traffic on UDP port 514 and store it into journald.
+
+Supported formats: RFC3164 and RFC5424
+
+### Generating installation packages
+
+[source,bash]
+----
+# install the Nim compiler, then:
+nimble build_rpm
+# or
+nimble build_deb
+----
+
+### Install and runtime dependencies
+
+Only journald.
+
+### Usage
+
+syslogjd starts once installed and listens on port 514 on all IP addreses.
+
+Edit /etc/systemd/journald.conf to increase logging throttling limits if needed:
+
+[source,bash]
+----
+[Journal]
+...
+RateLimitIntervalSec=1s
+RateLimitBurst=1000000
+...
+----
+
+### Parsing logs
+
+syslogjd adds the following custom fields:
+
+* IPADDR - sender IP address (from the UDP socket)
+* TIMESTAMP - date/timestamp from the syslog message
+
+RFC5424 messages are stored with additional fields:
+
+* HOSTNAME - hostname or IP address from the message
+* APPNAME - application or username
+* PROCID
+* MSGID
+
+RFC5424's "NILVALUE" are stored as "-"
+
+Parsing errors are stored with a special field:
+ SYSLOGJD_INTERNAL = error
+
+### Extracting logs
+
+Examples:
+
+[source,bash]
+----
+sudo journalctl --identifier syslogjd -f -o verbose
+sudo journalctl --identifier syslogjd -f -o json-pretty
+----
+
+Filtering examples:
+
+[source,bash]
+----
+sudo journalctl --since "1 hour ago" IPADDR="1.2.3.4"
+sudo journalctl --since "1 hour ago" IPADDR="1.2.3.4" APPNAME="kernel"
+----
+
+### Security
+
+* syslogjd runs as `nobody`
+* in a systemd / seccomp sandbox
+* with capabilities bound to CAP_NET_BIND_SERVICE
+* hardened with PIE and RELRO
+
+### Contributing
+
+Testing and PRs are welcome.
